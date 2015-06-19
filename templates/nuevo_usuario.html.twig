@@ -2,7 +2,7 @@
 {% block title %}Interoleo gestión | Nuevo usuario{% endblock %}
 {% block content %}
     <h3 class="page-title">
-        {% if nombre %}{{ nombre }} usuario{% else %}Nuevo usuario{% endif %} <small>Interoleo gestión</small>
+        {% if nombre1 %}{{ nombre1 }} usuario{% else %}Nuevo usuario{% endif %} <small>Interoleo gestión</small>
     </h3>
     <div class="page-bar">
         <ul class="page-breadcrumb">
@@ -12,7 +12,7 @@
                 <i class="fa fa-angle-right"></i>
             </li>
             <li>
-                <a href="/nuevo_usuario">{% if nombre %}{{ nombre }} usuario{% else %}Nuevo usuario{% endif %}</a>
+                <a href="/nuevo_usuario">{% if nombre1 %}{{ nombre1 }} usuario{% else %}Nuevo usuario{% endif %}</a>
             </li>
         </ul>
     </div>
@@ -22,7 +22,7 @@
             <div class="portlet-title">
                 <div class="caption font-red-sunglo">
                     <i class="icon-user font-red-sunglo"></i>
-                    <span class="caption-subject bold uppercase"> NUEVO USUARIO</span>
+                    <span class="caption-subject bold uppercase"> {% if nombre1 %}{{ nombre1 }} usuario{% else %}Nuevo usuario{% endif %}</span>
                 </div>
 
             </div>
@@ -97,6 +97,19 @@
                         </select>
                         <label for="form_control_1">Rol</label>
                     </div>
+                    {% if nombre['rol'] == 'Administrador' %}
+    <div class="form-group form-md-checkboxes">
+        <label>Opciones</label>
+        <div class="md-checkbox">
+            <input id="checkbox2" class="md-check" type="checkbox" {% if usuario.notificaciones_carga %}checked="checked"{% endif %} name="notificaciones">
+            <label for="checkbox2">
+                <span></span>
+                <span class="check"></span>
+                <span class="box"></span>
+                Notificaciones de carga </label>
+        </div>
+    </div>
+{% endif %}
                     <div class="form-actions noborder">
                         <button type="submit" name="enviar" {% if metodo %}value="{{ usuario.id }}"{% endif %} class="btn blue">Confirmar</button>
                         <button type="reset" class="btn default" >Cancel</button>
