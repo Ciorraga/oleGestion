@@ -1,4 +1,6 @@
+
 $(document).ready(function(){
+
     $('#contratos').change(function()
     {
         $("#cosa option").remove();

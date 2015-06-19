@@ -41,7 +41,19 @@
                     <select id="contratos" name="contrato" class="form-control">
                     <option value="0">- Seleccione un contrato -</option>
                     {% for contrato in contratos %}
-                        <option value="{{ contrato.id }}">{{ contrato.referencia }}</option>
+                        {% if usuarioLogin['rol']=='Administrador' %}
+                            {% if notificacion['id_contrato'] %}
+                                <option value="{{ contrato.id }}" selected>{{ contrato.referencia }}</option>
+                            {% else %}
+                                <option value="{{ contrato.id }}">{{ contrato.referencia }}</option>
+                            {% endif %}
+                        {% else %}
+                            {% if notificacion['id_contrato'] %}
+                                <option value="{{ contrato.id }}" selected>{{ contrato.referencia }}</option>
+                            {% else %}
+                                <option value="{{ contrato.id }}">{{ contrato.referencia }}</option>
+                            {% endif %}
+                        {% endif %}
                     {% endfor %}
                         </select>
                         <label for="contratos">Contratos</label>
@@ -55,23 +67,40 @@
 
                     <div class="form-group form-md-line-input">
                         <select id="cisternas" name="cisternas" class="form-control">
-                            <option value="0">- Selecciona cisterna/s -</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
+                            {% if notificacion['cisternas'] %}
+                                <option value="0">- Selecciona cisterna/s -</option>
+                                <option value="1" {% if notificacion['cisternas']==1 %} selected {% endif %}>1</option>
+                                <option value="2" {% if notificacion['cisternas']==2 %} selected {% endif %}>2</option>
+                                <option value="3" {% if notificacion['cisternas']==3 %} selected {% endif %}>3</option>
+                                <option value="4" {% if notificacion['cisternas']==4 %} selected {% endif %}>4</option>
+                                <option value="5" {% if notificacion['cisternas']==5 %} selected {% endif %}>5</option>
+                                <option value="6" {% if notificacion['cisternas']==6 %} selected {% endif %}>6</option>
+                                <option value="7" {% if notificacion['cisternas']==7 %} selected {% endif %}>7</option>
+                                <option value="8" {% if notificacion['cisternas']==8 %} selected {% endif %}>8</option>
+                                <option value="9" {% if notificacion['cisternas']==9 %} selected {% endif %}>9</option>
+                                <option value="10" {% if notificacion['cisternas']==10 %} selected {% endif %}>10</option>
+                            {% else %}
+                                <option value="0">- Selecciona cisterna/s -</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                            {% endif %}
                         </select>
                         <label for="cisternas">Cisternas</label>
                     </div>
 
                     <div id="inputs"  style="display: none;">
                         <label for="inputs">Matrículas</label>
+                        {% for i in matriculas %}
+                            <input type='text' name='matricula_{{ loop.index }}' class="form-control" value="{{ i['matricula'] }}" />
+                        {% endfor %}
                     </div>
 
                     <div class="form-group form-md-line-input has-info">
@@ -85,21 +114,82 @@
                     </div>
 
                     <div class="form-group form-md-line-input">
-                        <input type="text" class="form-control" name="fecha_carga" rows="3" placeholder="YYYY/MM/DD"/>
-                        <label for="form_control_1">Fecha de carga</label>
+                        <input type="text" class="form-control" name="fecha_carga" rows="3" {% if notificacion %}value="{{ notificacion['fecha_carga'] }}"{% endif %} placeholder="YYYY/MM/DD"/>
+                        <label for="form_control_1">Fecha de carga </label>
                     </div>
 
                     <div class="form-group form-md-line-input">
-                        <textarea class="form-control" name="observaciones" rows="3" placeholder="Escribe aquí las observaciones..."></textarea>
+                        <textarea class="form-control" name="observaciones" rows="3"  placeholder="Escribe aquí las observaciones...">{% if notificacion %}{{ notificacion['observaciones'] }}{% endif %}</textarea>
                         <label for="form_control_1">Observaciones</label>
                     </div>
 
-                    <button type="submit" name="botonCreaNotificacion" class="btn blue"><span class="md-click-circle md-click-animate"></span>Crear</button>
+                    {% if notificacion %}
+                        <button type="submit" name="botonEditaNotificacion" class="btn blue" value="{{ notificacion['id'] }}"><span class="md-click-circle md-click-animate"></span>Editar</button>
+                    {% else %}
+                        <button type="submit" name="botonCreaNotificacion" class="btn blue"><span class="md-click-circle md-click-animate"></span>Crear</button>
+                    {% endif %}
+
                     <a href="/" class="btn default">Cancelar</a>
                 </form>
             </div>
         </div>
         <!-- END SAMPLE FORM PORTLET-->
     </div>
+{% endblock %}
+{% block scripts %}
+    <script>
+        $(document).ready(function(){
+            $("#cosa option").remove();
+            valor = $('#contratos').val();
 
+            console.log(valor);
+            $.ajax({
+                type: "GET",
+                url: "rellenarContrato/"+valor,
+
+                success : function(response)
+                {
+                    $("#cosa").append(response);
+                }
+            });
+
+            //$("#inputs input").remove();
+            $("#inputs").show();
+            valor = $("#cisternas").val();
+
+
+
+
+            $('#contratos').change(function()
+            {
+                $("#cosa option").remove();
+                valor = $(this).val();
+
+                console.log(valor);
+                $.ajax({
+                    type: "GET",
+                    url: "rellenarContrato/"+valor,
+
+                    success : function(response)
+                    {
+                        $("#cosa").append(response);
+                    }
+                });
+                //}
+            });
+
+            // inputs segun cisternas
+            $('#cisternas').change(function()
+            {
+                $("#inputs input").remove();
+                $("#inputs").show();
+                valor = $(this).val();
+
+                for(i = 1;i <= valor;i++){
+                    $("#inputs").append("<input type='text' name='matricula_"+i+"'>");
+                }
+
+            });
+        });
+    </script>
 {% endblock %}

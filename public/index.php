@@ -170,7 +170,6 @@ $app->get('/listar_usuario', function() use ($app) {
 // -------------------------------------- BOTONES ------------------------------------------------
 $app->post('/', function() use ($app) {
     //Al pulsar el boton de login
-
     if(isset($_POST['username'])){        
 
         $nombreUser = htmlentities($_POST['username']);
@@ -657,16 +656,145 @@ $app->post('/', function() use ($app) {
         };
     };
 
-    if($_POST['editar_noti']){
+    if(isset($_POST['editar_noti'])){
         $notificacion = ORM::for_table('notificacion')
             ->where('id',$_POST['editar_noti'])
             ->find_one();
 
+        $matriculas = ORM::for_table('matricula')
+            ->where('id_notificacion',$_POST['editar_noti'])
+            ->find_many();
+
+
         $contratos = ORM::for_table('contrato')
             ->find_many();
 
-        $app->render('nueva_notificacion.html.twig',array('contratos' => $contratos,'notificacion' => $notificacion));
+        $app->render('nueva_notificacion.html.twig',array('contratos' => $contratos,
+            'notificacion' => $notificacion,
+            'usuarioLogin' => $_SESSION['usuarioLogin'],
+            'matriculas' => $matriculas,
+            'numMat' => count($matriculas)));
         die();
     }
+
+    if(isset($_POST['botonEditaNotificacion'])){
+        if($_POST['contrato']==0){
+            $notificacion = ORM::for_table('notificacion')
+                ->where('id',$_POST['botonEditaNotificacion'])
+                ->find_one();
+
+            $matriculas = ORM::for_table('matricula')
+                ->where('id_notificacion',$_POST['botonEditaNotificacion'])
+                ->find_many();
+
+
+            $contratos = ORM::for_table('contrato')
+                ->find_many();
+
+            $app->render('nueva_notificacion.html.twig',array('contratos' => $contratos,
+                'notificacion' => $notificacion,
+                'usuarioLogin' => $_SESSION['usuarioLogin'],
+                'matriculas' => $matriculas,
+                'mensajeError' => 'Debe seleccionar un contrato',
+                'numMat' => count($matriculas)));
+            die();
+        }
+
+            if($_POST['cisternas']==0){
+                $notificacion = ORM::for_table('notificacion')
+                    ->where('id',$_POST['botonEditaNotificacion'])
+                    ->find_one();
+
+                $matriculas = ORM::for_table('matricula')
+                    ->where('id_notificacion',$_POST['botonEditaNotificacion'])
+                    ->find_many();
+
+
+                $contratos = ORM::for_table('contrato')
+                    ->find_many();
+
+                $app->render('nueva_notificacion.html.twig',array('contratos' => $contratos,
+                    'notificacion' => $notificacion,
+                    'usuarioLogin' => $_SESSION['usuarioLogin'],
+                    'matriculas' => $matriculas,
+                    'mensajeError' => 'Debe seleccionar el número de cisternas',
+                    'numMat' => count($matriculas)));
+                die();
+            }
+
+            $mat = ORM::for_table('matricula')
+                ->where('id_notificacion',$_POST['botonEditaNotificacion'])
+                ->find_many();
+        foreach($mat as $m){
+            $m->delete();
+        }
+
+            $compMat = 0;
+            $fecha=date("Y-m-d");
+            $fecha_y_hora=date("Y-m-d H:i:s");
+
+            $nuevaNotificacion = ORM::for_table('notificacion')
+                ->find_one($_POST['botonEditaNotificacion']);
+
+            $nuevaNotificacion->id_contrato = $_POST['contrato'];
+            $nuevaNotificacion->id_socio = $_POST['socio'];
+            $nuevaNotificacion->cisternas = $_POST['cisternas'];
+            $nuevaNotificacion->estado = $_POST['estado'];
+            if($_POST['fecha_carga']) {
+                $nuevaNotificacion->fecha_carga = $_POST['fecha_carga'];
+            }
+            $nuevaNotificacion->fecha_modificacion = $fecha_y_hora;
+            $nuevaNotificacion->id_usuario_modifica = $_SESSION['usuarioLogin']['id'];
+            if($_POST['observaciones']){
+                $nuevaNotificacion->observaciones = $_POST['observaciones'];
+            }
+
+            //Rellena una variable que indicará si vienen matrículas con el formulario
+            for($i=1;$i<=$_POST['cisternas'];$i++){
+                if($_POST['matricula_'.$i]){
+                    $compMat++;
+                }
+            }
+
+            //Comprobación de que se han marcado cisternas en la notificación
+            if($_POST['cisternas']>1) {
+                //Comprobación. Si se han marcado cisternas pero ninguna matrícula se hace la inserción
+                if ($compMat == $_POST['cisternas'] || $compMat==0) {
+                    $nuevaNotificacion->save();
+                    // Comprobación de que si se introducen matrículas se introduzcan todas las marcadas en las cisternas
+                } else {
+                    $contratos = ORM::for_table('contrato')
+                        ->find_many();
+                    $app->render('nueva_notificacion.html.twig', array('mensajeError' => 'No puede dejar campos vacíos en las matrículas','contratos' => $contratos));
+                    die();
+                }
+            }else{
+                if ($compMat == $_POST['cisternas']) {
+                    $nuevaNotificacion->save();
+                }
+            }
+
+            //$nuevaNotificacion->save();
+            $idNotificacion = ORM::for_table('notificacion')
+                ->order_by_desc('id')
+                ->find_many();
+            if($compMat!=0){
+                for($i=1;$i<=$_POST['cisternas'];$i++){
+                    if($_POST['matricula_'.$i]){
+                        $idNotificacion = ORM::for_table('notificacion')
+                            ->order_by_desc('id')
+                            ->find_many();
+                        $nuevaMatricula = ORM::for_table('matricula')
+                            ->create();
+                        $nuevaMatricula->id_notificacion = $idNotificacion[0]['id'];
+                        $nuevaMatricula->matricula = $_POST['matricula_'.$i];
+                        $nuevaMatricula->save();
+                    }
+                }
+            }
+            $app->render('inicio.html.twig',array('mensajeOk' => 'Notificación agregada con éxito'));
+            die();
+
+    };
 });
 $app->run();
